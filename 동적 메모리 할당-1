@@ -1,4 +1,4 @@
-*동적 메모리 할당
+*메모리 할당하기
 #include <stdio.h>
 #include <stdlib.h>   
 
@@ -16,6 +16,25 @@ int main()
     printf("%p\n", numPtr2);    
 
     free(numPtr2);   
+
+    return 0;
+}
+//////////////////////////////////////////////////
+*메모리에 값 저장하기
+#include <stdio.h>
+#include <stdlib.h>    
+
+int main(void)
+{
+    int* numPtr;   
+
+    numPtr = (int *)malloc(sizeof(int));  
+    
+    *numPtr = 20;   
+
+    printf("%d \n", *numPtr);   
+
+    free(numPtr);    
 
     return 0;
 }
