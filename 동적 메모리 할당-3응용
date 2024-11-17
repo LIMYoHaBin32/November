@@ -2,49 +2,64 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-int *data;
 int no_data = -1;
+int result;
 
-double *read_data_file(const std::string & file_path)
+double *read_data_file(const char* file_path)
 {
-FILE *fp;
-double *data_array;
+    FILE* fp;
+    double* data;
 
-printf("waypoint file:%s\n", file_path.c_str()); 
+    printf("waypoint file: %s\n", file_path);
 
-fp = fopen(file_path.c_str(), "r");
-if(fp == NULL) 
-{ 
-printf("File does not exit!");
-exit(1); // 종료
+    fp = fopen(file_path, "r");
+    if (fp == NULL)
+    {
+        printf("파일이 존재X\n");
+        exit(1);
+    }
+    else
+    {
+        no_data = 0;
+    }
+
+        do
+        {
+            double temp;
+            result = fscanf(fp, "%d", &temp);
+            if (result != EOF)
+            {
+                no_data++;
+            }
+        } while (result != EOF);
+
+        fclose(fp);
+
+        fp = fopen(file_path, "r");
+
+        data = (double*)malloc(no_data * sizeof(double));
+
+        for (int i = 0; i < no_data; ++i)
+        {
+            fscanf(fp, "%lf", &data[i]);
+        }
+
+        fclose(fp);
+        printf("총 %d개의 데이터\n", no_data);
+
+        return data;
 }
-else
+
+void swap(double* cc, double* dd)
 {
-no_data = 0;
-do
-{   
-double temp;
-result = fscanf(fp,"%d",&temp);
-if(result != EOF)
-{   
-no_data++;
-}
-}
-while(result != EOF);
-fclose(fp);
-// DATA의 갯수가 나오므로 동적 할당을  수행함
-// 파일을 다시 열어서 읽어야
-fp = fopen(file_path.c_str(), "r");
-data_array = (double *)calloc(no_data *sizeof(double)); 
-for(int i=0; i<no_data; i++)
-{
-fscanf(fp,"%lf",&data_aray[i]);
-}   
-fclose(fp);
-return data_array;
+    int temp;
+
+    temp = *cc;
+    *cc = *dd;
+    *dd = temp;
 }
 
-void print_data()
+void print_data(double* data)
 {
     if (data == NULL || no_data <= 0)
     {
@@ -52,45 +67,43 @@ void print_data()
         return;
     }
 
-    printf("데이터 출력:\n");
-    for (int i = 0; i < no_data; ++i) 
+    printf("데이터 출력: ");
+    for (int i = 0; i < no_data; ++i)
     {
-        printf("%d ", data[i]);
+        printf("%.2lf ", data[i]);
     }
     printf("\n");
 }
 
-void sort_min_max(int* arr, int size, int* min, int* max)
+void sort(double* arr, int size, int* min, int* max)
 {
-    *max = arr[0];
-    *min = arr[0];
+    int temp = 0;
 
-    for (int i = 1; i < size; ++i)
+    for (int i = 0; i < size-1; ++i)
     {
-        if (*max < arr[i])
+        for (int j = 0; j < size - i - 1; ++j)
         {
-            *max = arr[i];
-        }
-        if (*min > arr[i])
-        {
-            *min = arr[i];
+            if (arr[j] > arr[j + 1])
+            {
+                swap(&arr[j], &arr[j + 1]);
+            }
         }
     }
 }
 
-int main(void) 
+int main()
 {
+    int min, max;
+
     const char* file_path = "data.txt";
-    read_data_file(file_path);
-    print_data();
+    double* data_array = read_data_file(file_path);
+    print_data(data_array);
+    sort(data_array, no_data, &min, &max);
+    print_data(data_array);
 
-    if (data != NULL && no_data > 0) 
+    if (data_array != NULL)
     {
-        int min, max;
-        sort_min_max(data, no_data, &min, &max);
-        printf("최소 값: %d, 최대 값: %d\n", min, max);
-
-        free(data);
+        free(data_array);
     }
 
     return 0;
