@@ -1,0 +1,97 @@
+#define _CRT_SECURE_NO_WARNINGS
+#include <stdio.h>
+#include <stdlib.h>
+
+int *data;
+int no_data = -1;
+
+double *read_data_file(const std::string & file_path)
+{
+FILE *fp;
+double *data_array;
+
+printf("waypoint file:%s\n", file_path.c_str()); 
+
+fp = fopen(file_path.c_str(), "r");
+if(fp == NULL) 
+{ 
+printf("File does not exit!");
+exit(1); // 종료
+}
+else
+{
+no_data = 0;
+do
+{   
+double temp;
+result = fscanf(fp,"%d",&temp);
+if(result != EOF)
+{   
+no_data++;
+}
+}
+while(result != EOF);
+fclose(fp);
+// DATA의 갯수가 나오므로 동적 할당을  수행함
+// 파일을 다시 열어서 읽어야
+fp = fopen(file_path.c_str(), "r");
+data_array = (double *)calloc(no_data *sizeof(double)); 
+for(int i=0; i<no_data; i++)
+{
+fscanf(fp,"%lf",&data_aray[i]);
+}   
+fclose(fp);
+return data_array;
+}
+
+void print_data()
+{
+    if (data == NULL || no_data <= 0)
+    {
+        printf("출력 데이터X\n");
+        return;
+    }
+
+    printf("데이터 출력:\n");
+    for (int i = 0; i < no_data; ++i) 
+    {
+        printf("%d ", data[i]);
+    }
+    printf("\n");
+}
+
+void sort_min_max(int* arr, int size, int* min, int* max)
+{
+    *max = arr[0];
+    *min = arr[0];
+
+    for (int i = 1; i < size; ++i)
+    {
+        if (*max < arr[i])
+        {
+            *max = arr[i];
+        }
+        if (*min > arr[i])
+        {
+            *min = arr[i];
+        }
+    }
+}
+
+int main(void) 
+{
+    const char* file_path = "data.txt";
+    read_data_file(file_path);
+    print_data();
+
+    if (data != NULL && no_data > 0) 
+    {
+        int min, max;
+        sort_min_max(data, no_data, &min, &max);
+        printf("최소 값: %d, 최대 값: %d\n", min, max);
+
+        free(data);
+    }
+
+    return 0;
+}
