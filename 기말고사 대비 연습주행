@@ -18,8 +18,8 @@
 #define Grid_Size 0.4
 
 float target_heading_angle = 90;
-float kp_yaw = 0.2;
-float kd_yaw = 0.5;
+float kp_yaw = 0.2; // 0.15
+float kd_yaw = 0.5; // 0.45 2~3배 차이
 float error_yaw = 0.0;
 float error_yaw_old = 0.0;
 float pid_out;
@@ -43,8 +43,8 @@ long prev_encoder_B = 0;
 
 const int IMG_WIDTH_HALF = 63;
 const int BASE_SPEED = 85;
-const float KP = 3.5;
-const float KD = 0.25;
+const float KP = 3.5; 
+const float KD = 0.25; 
 float error_old = 0.0;
 
 #define FASTADC 1
@@ -135,7 +135,7 @@ void MsTimer2_ISR()
       break;
   }
 }
-
+// HIGH, LOW 바꾸기
 void motor_l(int speed) 
 {
   if (speed >= 0) 
@@ -378,6 +378,3 @@ void loop()
       break;
   }
 }
-
-
-
