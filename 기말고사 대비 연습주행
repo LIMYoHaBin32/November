@@ -7,19 +7,19 @@
 #define CLKpin 22
 #define NPIXELS 128
 
-#define ENA 7
-#define IN1 11
-#define IN2 10
-#define IN3 9
-#define IN4 8
-#define ENB 6
+#define ENA 12
+#define IN1 8
+#define IN2 9
+#define IN3 10
+#define IN4 11
+#define ENB 13
 
 #define base_speed 100
 #define Grid_Size 0.4
 
 float target_heading_angle = 90;
-float kp_yaw = 0.21;
-float kd_yaw = 0.4;
+float kp_yaw = 0.2; // 0.15
+float kd_yaw = 0.5; // 0.45 2~3배 차이
 float error_yaw = 0.0;
 float error_yaw_old = 0.0;
 float pid_out;
@@ -41,10 +41,10 @@ long encoder_B_pulse = 0;
 long prev_encoder_A = 0;
 long prev_encoder_B = 0;
 
-const int IMG_WIDTH_HALF = 64;
-const int BASE_SPEED = 100;
+const int IMG_WIDTH_HALF = 63;
+const int BASE_SPEED = 85;
 const float KP = 3.5;
-const float KD = 0.4;
+const float KD = 0.25;
 float error_old = 0.0;
 
 #define FASTADC 1
@@ -64,7 +64,7 @@ struct Waypoint
   double heading_angle;
 };
 
-Waypoint waypoints[8];
+Waypoint waypoints[9];
 int waypoint_no = 0;
 
 void setup() 
@@ -322,7 +322,7 @@ void loop()
         function_flag = 3; 
         delay(500);
         reset_IMU(); 
-        target_yaw = waypoints[waypoint_no].heading_angle; 
+        target_yaw =  waypoints[waypoint_no].heading_angle + compass.heading(); 
         function_flag = 2; 
         mission_flag = 2;
       }
