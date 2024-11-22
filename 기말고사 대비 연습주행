@@ -7,23 +7,23 @@
 #define CLKpin 22
 #define NPIXELS 128
 
-#define ENA 12
+#define ENA 7
 #define IN1 8
 #define IN2 9
 #define IN3 10
 #define IN4 11
-#define ENB 13
+#define ENB 12
 
 #define base_speed 100
 #define Grid_Size 0.4
 
 float target_heading_angle = 90;
-float kp_yaw = 0.2; // 0.15
-float kd_yaw = 0.5; // 0.45 2~3배 차이
-float error_yaw = 0.0;
+float yaw_kp = 0.2; // 0.15
+float yaw_kd = 0.5; // 0.45 2~3배 차이
+float yaw_error = 0.0;
 float error_yaw_old = 0.0;
 float pid_out;
-float target_yaw;
+float yaw_target;
 
 LSM303 compass;
 
@@ -69,12 +69,12 @@ int waypoint_no = 0;
 
 void setup() 
 {
-  reset_encoder();               
-  reset_IMU();                   
+  encoder_reset();               
+  IMU_reset();                   
   MsTimer2::set(20, MsTimer2_ISR);
   MsTimer2::start();
 
-  for (int i = 0; i < NPIXELS; i++) 
+  for (int i = 0; i < NPIXELS; ++i) 
   {
     LineSensor_Data[i] = 0;
     LineSensor_Data_Adaption[i] = 0;
@@ -113,7 +113,7 @@ void setup()
 }
 
 
-void reset_encoder() 
+void encoder_reset() 
 {
   encoder_A_pulse = 0;
   encoder_B_pulse = 0;
@@ -138,7 +138,7 @@ void MsTimer2_ISR()
   }
 }
 
-void motor_l(int speed) 
+void l_motor(int speed) 
 {
   if (speed >= 0) 
   {
@@ -154,7 +154,7 @@ void motor_l(int speed)
   }
 }
 
-void motor_r(int speed) 
+void r_motor(int speed) 
 {
   if (speed >= 0) 
   {
@@ -172,18 +172,19 @@ void motor_r(int speed)
 
 void motor_control(int left_motor_speed, int right_motor_speed) 
 {
-  motor_l(left_motor_speed);
-  motor_r(right_motor_speed);
+  l_motor(left_motor_speed);
+  r_motor(right_motor_speed);
 }
 
-void reset_IMU() {
+void IMU_reset()
+{
   compass.init(); 
   delay(100);     
   compass.read(); 
-  Serial.println("IMU has been reset.");
+  Serial.println("IMU 리셋 완료.");
 }
 
-void read_line_camera(void)
+void read_line_camera()
 {
   int i;
   digitalWrite(CLKpin, LOW);
@@ -192,7 +193,7 @@ void read_line_camera(void)
   digitalWrite(SIpin, LOW);
   delayMicroseconds(1);
 
-  for (i = 0; i < NPIXELS; i++)
+  for (i = 0; i < NPIXELS; ++i)
   {
     Pixel[i] = analogRead(A0pin) / 4;
     digitalWrite(CLKpin, LOW);
@@ -210,7 +211,7 @@ void update_robot_distance()
   float avg_pulse = (delta_A + delta_B) / 2.0;
   robot_distance += (avg_pulse / pulses_per_rev) * wheel_circumference;
 
-  Serial.print("Distance: ");
+  Serial.print("거리: ");
   Serial.println(robot_distance);
 
   prev_encoder_A = encoder_A_pulse;
@@ -227,13 +228,13 @@ void yaw_control()
   compass.read();
   float heading_angle = compass.heading();
 
-  error_yaw = target_yaw - heading_angle;
-  if (error_yaw > 180) error_yaw -= 360;
-  else if (error_yaw < -180) error_yaw += 360;
+  yaw_error = yaw_target - heading_angle;
+  if (yaw_error > 180) yaw_error -= 360;
+  else if (yaw_error < -180) yaw_error += 360;
 
-  error_yaw_d = error_yaw - error_yaw_old;
-  pid_out = kp_yaw * error_yaw + kd_yaw * error_yaw_d;
-  error_yaw_old = error_yaw;
+  error_yaw_d = yaw_error - error_yaw_old;
+  pid_out = yaw_kp * yaw_error + yaw_kd * error_yaw_d;
+  error_yaw_old = yaw_error;
 
   l_motor_speed = base_speed + (int)pid_out;
   r_motor_speed = base_speed - (int)pid_out;
@@ -244,24 +245,25 @@ void yaw_control()
 void threshold_line_image(int threshold_value)
 {
   digitalWrite(test_pin, HIGH);
-  for (int i = 0; i < NPIXELS; i++)
+  for (int i = 0; i < NPIXELS; ++i)
   {
     if (Pixel[i] >= threshold_value)
     {
       Threshold_Data[i] = 255;
-    } else {
+    } else
+    {
       Threshold_Data[i] = 0;
     }
   }
   digitalWrite(test_pin, LOW);
 }
 
-double line_COM(void)
+double line_COM()
 {
   double COM = 0.0;
   double mass_sum = 0.0;
 
-  for (int i = 0; i < NPIXELS; i++)
+  for (int i = 0; i < NPIXELS; ++i)
   {
     mass_sum += Threshold_Data[i];
     COM += Threshold_Data[i] * i;
@@ -309,9 +311,9 @@ void loop()
     case 0: 
       motor_control(0, 0);
       delay(500);
-      reset_encoder();
+      encoder_reset();
       robot_distance = 0.0;
-      reset_IMU(); 
+      IMU_reset(); 
       function_flag = 1; 
       mission_flag = 1;
       break;
@@ -321,8 +323,8 @@ void loop()
       {
         function_flag = 3; 
         delay(500);
-        reset_IMU(); 
-        target_yaw =  waypoints[waypoint_no].heading_angle + compass.heading(); 
+        IMU_reset(); 
+        yaw_target =  waypoints[waypoint_no].heading_angle + compass.heading(); 
         function_flag = 2; 
         mission_flag = 2;
       }
@@ -338,7 +340,7 @@ void loop()
       {
         function_flag = 3; 
         delay(500);
-        reset_encoder();
+        encoder_reset();
         mission_flag = 3;
       }
       break;
@@ -346,9 +348,9 @@ void loop()
     case 3: 
       motor_control(0, 0);
       delay(500);
-      reset_encoder();
+      encoder_reset();
       robot_distance = 0.0;
-      reset_IMU(); 
+      IMU_reset(); 
 
       waypoint_no++;
       if (waypoint_no < sizeof(waypoints) / sizeof(waypoints[0]))
